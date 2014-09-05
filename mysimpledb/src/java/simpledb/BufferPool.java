@@ -35,8 +35,13 @@ public class BufferPool {
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
+    
+    ConcurrentHashMap<PageId, Page> buffer;
+    int maxPages;
+    
     public BufferPool(int numPages) {
-        // some code goes here
+    	buffer = new ConcurrentHashMap<PageId, Page>();
+    	maxPages = numPages;
     }
 
     public static int getPageSize() {
@@ -65,7 +70,18 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
-        // some code goes here
+        if (buffer.containsKey(pid)) {
+        	return buffer.get(pid);
+        }
+        else if (buffer.size() < maxPages) {
+        	Catalog cat = Database.getCatalog();
+        	Page newPage = cat.getDatabaseFile(pid.getTableId()).readPage(pid);
+        	buffer.put(pid, newPage);
+        	return newPage;
+        }
+        else {
+        	throw new DbException();
+        }
         return null;
     }
 
