@@ -18,12 +18,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Catalog {
 
+	HashMap<String, DbFile> catalogueByName;
+	HashMap<Integer, DbFile> catalogueById;
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        // some code goes here
+    	catalogueByName = new HashMap<String, DbFile>();
+    	catalogueById = new HashMap<Integer, DbFile>();
     }
 
     /**
@@ -37,7 +40,8 @@ public class Catalog {
      *                  conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+    	catalogueByName.put(name, file);
+    	catalogueById.put(file.getId(), file);
     }
 
     public void addTable(DbFile file, String name) {
@@ -62,8 +66,12 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+        if (catalogueByName.containsKey(name)) {
+        	return catalogueByName.get(name).getId();
+        }
+        else {
+        	throw new NoSuchElementException();
+        }
     }
 
     /**
@@ -74,8 +82,12 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        if (catalogueById.containsKey(tableid)) {
+        	return catalogueById.get(tableid).getTupleDesc();
+        }
+        else {
+        	throw new NoSuchElementException();
+        }
     }
 
     /**
@@ -86,8 +98,12 @@ public class Catalog {
      *                function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        if (catalogueById.containsKey(tableid)) {
+        	return catalogueById.get(tableid);
+        }
+        else {
+        	throw new NoSuchElementException();
+        }
     }
 
     public String getPrimaryKey(int tableid) {
