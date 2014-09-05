@@ -1,8 +1,6 @@
 package simpledb;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
@@ -12,6 +10,10 @@ import java.util.Iterator;
 public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    
+    TupleDesc desc_;
+    Field[] fields_;
+    RecordId rid_;
 
     /**
      * Create a new tuple with the specified schema (type).
@@ -20,15 +22,15 @@ public class Tuple implements Serializable {
      *           instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-        // some code goes here
+        desc_ = td;
+        fields_ = new Field[desc_.getSize()];
     }
 
     /**
      * @return The TupleDesc representing the schema of this tuple.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return desc_;
     }
 
     /**
@@ -36,8 +38,7 @@ public class Tuple implements Serializable {
      * be null.
      */
     public RecordId getRecordId() {
-        // some code goes here
-        return null;
+        return rid_;
     }
 
     /**
@@ -46,7 +47,7 @@ public class Tuple implements Serializable {
      * @param rid the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-        // some code goes here
+    	rid_ = rid;
     }
 
     /**
@@ -56,7 +57,14 @@ public class Tuple implements Serializable {
      * @param f new value for the field.
      */
     public void setField(int i, Field f) {
-        // some code goes here
+    	String type1 = f.getType().toString();
+    	String type2 = desc_.desc.get(i).fieldType.toString();
+    	if (type1.equals(type2)) {
+            fields_[i] = f;
+    	}
+    	else {
+    		throw new RuntimeException();
+    	}
     }
 
     /**
@@ -64,8 +72,7 @@ public class Tuple implements Serializable {
      * @return the value of the ith field, or null if it has not been set.
      */
     public Field getField(int i) {
-        // some code goes here
-        return null;
+        return fields_[i];
     }
 
     /**
@@ -77,8 +84,20 @@ public class Tuple implements Serializable {
      * where \t is any whitespace, except newline
      */
     public String toString() {
-        // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        String str = "";
+        boolean iReallyWishICouldUseSomeMapAndReduce = false;
+        for (Field f : fields_) {
+        	if (iReallyWishICouldUseSomeMapAndReduce) {
+        		str = str.concat(" ");
+        	}
+        	else {
+                iReallyWishICouldUseSomeMapAndReduce = true;
+            }
+        	if (f != null) {
+        	    str = str.concat(f.toString());
+        	}
+        }
+        return str;
     }
 
 }
