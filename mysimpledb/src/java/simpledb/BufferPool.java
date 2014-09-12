@@ -80,9 +80,8 @@ public class BufferPool {
         	return newPage;
         }
         else {
-        	throw new DbException();
+        	throw new DbException("Buffer Full.");
         }
-        return null;
     }
 
     /**
