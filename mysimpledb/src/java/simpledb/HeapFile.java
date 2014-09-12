@@ -135,6 +135,7 @@ public class HeapFile implements DbFile {
         public void open() throws DbException, TransactionAbortedException{
 			currentPageIterator = ((HeapPage) bufferpool.getPage(null, new HeapPageId(0, currentPageNo), null)).iterator();
 			currentPageNo++;
+			openYet = true;
 		}
 
     /**
@@ -187,6 +188,7 @@ public class HeapFile implements DbFile {
      */
 		@Override
         public void close() {
+			openYet = false;
 		}
 
     }
