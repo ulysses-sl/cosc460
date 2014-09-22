@@ -26,6 +26,7 @@ public class HeapFile implements DbFile {
     public HeapFile(File f, TupleDesc td) {
     	tDesc = td;
     	file = f;
+    	Database.getCatalog().addTable(this);
     }
 
     /**
@@ -117,14 +118,12 @@ public class HeapFile implements DbFile {
 
     class PageIterator implements DbFileIterator {
     	private boolean openYet;
-    	private BufferPool bufferpool;
     	private int currentPageNo;
     	private Iterator<Tuple> currentPageIterator;
     	
     	public PageIterator() {
     		openYet = false;
     		currentPageNo = 0;
-			bufferpool = new BufferPool(numPages());
     	}
     /**
      * Opens the iterator
@@ -133,7 +132,7 @@ public class HeapFile implements DbFile {
      */
 		@Override
         public void open() throws DbException, TransactionAbortedException{
-			currentPageIterator = ((HeapPage) bufferpool.getPage(null, new HeapPageId(0, currentPageNo), null)).iterator();
+			currentPageIterator = ((HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(getId(), currentPageNo), null)).iterator();
 			currentPageNo++;
 			openYet = true;
 		}
@@ -143,7 +142,7 @@ public class HeapFile implements DbFile {
      */
 		@Override
         public boolean hasNext() {
-			return openYet && (!(currentPageNo < numPages()) || currentPageIterator.hasNext());
+			return openYet && (currentPageNo < numPages() || currentPageIterator.hasNext());
 		}
 
     /**
@@ -159,11 +158,11 @@ public class HeapFile implements DbFile {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			if (currentPageIterator.hasNext()) {
+			else if (currentPageIterator.hasNext()) {
 				return currentPageIterator.next();
 			}
 			else if (currentPageNo < numPages()) {
-			    currentPageIterator = ((HeapPage) bufferpool.getPage(null, new HeapPageId(0, currentPageNo), null)).iterator();
+                currentPageIterator = ((HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(getId(), currentPageNo), null)).iterator();
 				currentPageNo++;
 				return currentPageIterator.next();
 			}

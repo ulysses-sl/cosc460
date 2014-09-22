@@ -20,13 +20,17 @@ public class Catalog {
 
 	HashMap<String, DbFile> catalogueByName;
 	HashMap<Integer, DbFile> catalogueById;
-    /**
+	HashMap<Integer, String> nameById;
+	HashMap<Integer, String> pKeyById;
+     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
     	catalogueByName = new HashMap<String, DbFile>();
     	catalogueById = new HashMap<Integer, DbFile>();
+    	nameById = new HashMap<Integer, String>();
+    	pKeyById = new HashMap<Integer, String>();
     }
 
     /**
@@ -42,6 +46,8 @@ public class Catalog {
     public void addTable(DbFile file, String name, String pkeyField) {
     	catalogueByName.put(name, file);
     	catalogueById.put(file.getId(), file);
+    	nameById.put(file.getId(), name);
+    	pKeyById.put(file.getId(), pkeyField);
     }
 
     public void addTable(DbFile file, String name) {
@@ -107,18 +113,15 @@ public class Catalog {
     }
 
     public String getPrimaryKey(int tableid) {
-        // some code goes here
-        return null;
+        return pKeyById.get(tableid);
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        return catalogueById.keySet().iterator();
     }
 
     public String getTableName(int id) {
-        // some code goes here
-        return null;
+    	return nameById.get(id);
     }
 
     /**
