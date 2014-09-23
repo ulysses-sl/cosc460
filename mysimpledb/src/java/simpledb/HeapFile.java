@@ -84,8 +84,12 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+    	int pageNo = page.getId().pageNumber();
+    	int pagesize = BufferPool.getPageSize();
+        RandomAccessFile dbfile = new RandomAccessFile(file, "rw");
+        dbfile.seek(pagesize * pageNo + 1);
+        dbfile.write(page.getPageData());
+        dbfile.close();
     }
 
     /**
@@ -98,17 +102,34 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+    	HeapPage page;
+    	try {
+            page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+    	} catch (NoSuchElementException e) {
+    		page = new HeapPage(new HeapPageId(getId(), numPages()), HeapPage.createEmptyPageData());
+    	}
+    	if (page.getNumEmptySlots() == 0) {
+    		page = new HeapPage(new HeapPageId(getId(), numPages()), HeapPage.createEmptyPageData());
+    	}
+    	page.insertTuple(t);
+    	ArrayList<Page> listOfPage = new ArrayList<Page>();
+    	listOfPage.add(page);
+        return listOfPage;
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+    	HeapPage page;
+    	try {
+    	    page = (HeapPage) Database.getBufferPool().getPage(tid, t.getRecordId().getPageId(), null);
+    	} catch (NoSuchElementException e) {
+    		throw new DbException("No such page");
+    	}
+    	page.deleteTuple(t);
+    	ArrayList<Page> listOfPage = new ArrayList<Page>();
+    	listOfPage.add(page);
+        return listOfPage;
     }
 
     // see DbFile.java for javadocs
