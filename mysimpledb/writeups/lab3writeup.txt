@@ -3,13 +3,57 @@ Report for Lab 3
 
 Answer the questions from the lab description here.  Questions 8 and 9 do not require answers.
 
-1.
-2.
-3.
-4.
-5.
+1. Aggregate, Delete, Filter, HashEquiJoin, Insert, Join, Project, SeqScan, Operator, TupleIterator
+2. Filter, Insert, Delete, Join, OrderBy, Project, Aggregate, HashEquiJoin
+3. project, join
+4. It does not override the superclass definitions and uses them.
+5. 
+
+if not iterR.hasNext():
+    return null
+else:
+    while iterR.hasNext() and t does not matches predicate:
+        t = iterR.next()
+    rv = t
+    if iterR.hasNext():
+        t = iterR.next()
+    return rv
+
 6.
+
+list = []
+while iterR.hasNext():
+    while iterS.hasNext():
+        t1 = iterR.next()
+        t2 = iterS.next()
+        if t1 and t2 match join predicate:
+            list.append( merge(t1, t2) )
+    iterS.rewind()
+return list
+
 7.
+
+if not iterR.hasNext() and not iterS.hasNext():
+    return null
+else:
+    while ( iterR.hasNext() or iterS.hasNext() ) and t1 and t2 does not match join predicate:
+        if not iterS.hasNext():
+            iterS.rewind()
+            t1 = iterR.next()
+        t2 = iterS.next()
+
+    if t1 and t2 match join predicate:
+        t = merge(t1, t2)
+        if iterS.hasNext():
+            t2 = iterS.next()
+        else if iterR.hasNext():
+            t1 = iterR.next()
+            iterS.rewind()
+    else:
+        t = null;
+
+    return t
+
 
 After you complete lab 3, please answer the following questions.  
 
