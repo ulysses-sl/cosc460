@@ -2,6 +2,8 @@ package simpledb;
 
 import java.io.*;
 
+import java.util.*;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,10 +39,12 @@ public class BufferPool {
      */
     
     ConcurrentHashMap<PageId, Page> buffer;
+    ConcurrentHashMap<PageId, Long> accessTime;
     int maxPages;
     
     public BufferPool(int numPages) {
     	buffer = new ConcurrentHashMap<PageId, Page>();
+        accessTime = new ConcurrentHashMap<PageId, Long>();
     	maxPages = numPages;
     }
 
@@ -71,17 +75,21 @@ public class BufferPool {
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException {
         if (buffer.containsKey(pid)) {
+            accessTime.put(pid, System.currentTimeMillis());
         	return buffer.get(pid);
         }
-        else if (buffer.size() < maxPages) {
-        	Catalog cat = Database.getCatalog();
-        	Page newPage = cat.getDatabaseFile(pid.getTableId()).readPage(pid);
-        	buffer.put(pid, newPage);
-        	return newPage;
+        if (buffer.size() >= maxPages) {
+            evictPage();
         }
+        Catalog cat = Database.getCatalog();
+        Page newPage = cat.getDatabaseFile(pid.getTableId()).readPage(pid);
+        buffer.put(pid, newPage);
+        accessTime.put(pid, System.currentTimeMillis());
+        return newPage;
+        /*
         else {
-        	throw new DbException("Buffer Full.");
-        }
+        	evictPage();//throw new DbException("Buffer Full.");
+        }*/
     }
 
     /**
@@ -146,8 +154,12 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+        ArrayList<Page> dirtyPages = file.insertTuple(tid, t);
+
+        for (Page p : dirtyPages) {
+            p.markDirty(true, tid);
+        }
     }
 
     /**
@@ -164,8 +176,13 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        int tableId = t.getRecordId().getPageId().getTableId();
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+        ArrayList<Page> dirtyPages = file.deleteTuple(tid, t);
+
+        for (Page p : dirtyPages) {
+            p.markDirty(true, tid);
+        }
     }
 
     /**
@@ -174,9 +191,24 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for lab1
-
+        Catalog cat = Database.getCatalog();
+        BufferPool buf = Database.getBufferPool();
+        for (PageId pid : buf.buffer.keySet()) {
+            Page page = null;
+            try {
+                page = buf.getPage(null, pid, null);
+            } catch (TransactionAbortedException e) {
+                System.out.println("Transaction aborted");
+                e.printStackTrace();
+            } catch (DbException e) {
+                System.out.println("Database error");
+                e.printStackTrace();
+            }
+            if (page.isDirty() != null) {
+                cat.getDatabaseFile(pid.getTableId()).writePage(page);
+                page.markDirty(false, null);
+            }
+        }
     }
 
     /**
@@ -196,8 +228,22 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        Catalog cat = Database.getCatalog();
+        BufferPool buf = Database.getBufferPool();
+        Page page = null;
+        try {
+            page = buf.getPage(null, pid, null);
+        } catch (TransactionAbortedException e) {
+            System.out.println("Transaction aborted");
+            e.printStackTrace();
+        } catch (DbException e) {
+            System.out.println("Database error");
+            e.printStackTrace();
+        }
+        if (page.isDirty() != null) {
+            cat.getDatabaseFile(pid.getTableId()).writePage(page);
+            page.markDirty(false, null);
+        }
     }
 
     /**
@@ -213,8 +259,27 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        PageId pid = null;
+        long oldest = 0;
+        Iterator it = accessTime.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<PageId, Long> pairs = (Map.Entry<PageId, Long>) it.next();
+            if ((oldest == 0) || (pairs.getValue() < oldest)) {
+                pid = pairs.getKey();
+                oldest = pairs.getValue();
+            }
+        }
+        if (pid == null) {
+            throw new DbException("no page to evict");
+        }
+        accessTime.remove(pid);
+        try {
+            flushPage(pid);
+        } catch (IOException e) {
+            System.out.println("IO exception");
+            e.printStackTrace();
+        }
+        buffer.remove(pid);
     }
 
 }
