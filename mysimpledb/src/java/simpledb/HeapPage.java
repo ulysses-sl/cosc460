@@ -356,7 +356,7 @@ public class HeapPage implements Page {
     class TupleIterator implements Iterator<Tuple> {
     	private int idx;
     	private int count;
-    	private final int max; 
+    	private final int max;
     	
     	public TupleIterator() {
     		idx = 0;

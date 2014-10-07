@@ -88,9 +88,12 @@ public class Insert extends Operator {
         while (childIt.hasNext()) {
             try {
                 Tuple tpl = childIt.next();
+<<<<<<< HEAD
                 if (tpl == null) { throw new DbException("poop 1"); }
                 if (tpl.getRecordId() == null) { throw new DbException("poop 2"); }
                 if (tpl.getRecordId().getPageId() == null) { throw new DbException("poop 3"); }
+=======
+>>>>>>> e1008ebf8114d89480775549c4fbb72dd60cd542
                 Database.getBufferPool().insertTuple(tid, tabid, tpl);
                 num++;
             } catch (IOException e) {
