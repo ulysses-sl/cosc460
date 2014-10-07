@@ -105,11 +105,6 @@ public class HeapFile implements DbFile {
             throws DbException, IOException, TransactionAbortedException {
     	HeapPage page;
     	try {
-    		//System.out.println(t.getRecordId().getPageId().toString());
-    		//System.out.println(getId());
-    		//System.out.println(t.getRecordId().getPageId().getTableId());
-    		//System.out.println(t.getRecordId().getPageId().pageNumber());
-    		//System.out.println(new HeapPageId(getId(), t.getRecordId().getPageId().getTableId()))
     		int pageno = t.getRecordId().getPageId().pageNumber();
     		if (pageno >= numPages()) {
     			pageno = numPages() - 1;

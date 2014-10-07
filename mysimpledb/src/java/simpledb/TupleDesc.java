@@ -52,7 +52,9 @@ public class TupleDesc implements Serializable {
     	desc = new ArrayList<TDItem>();
     	int descLen = typeAr.length;
     	for (int i = 0; i < descLen; i++) {
-    		desc.add(new TDItem(typeAr[i], fieldAr[i]));
+            if (typeAr[i] != null) {
+    		    desc.add(new TDItem(typeAr[i], fieldAr[i]));
+            }
     	}
     }
 
@@ -67,7 +69,9 @@ public class TupleDesc implements Serializable {
     	desc = new ArrayList<TDItem>();
     	int descLen = typeAr.length;
     	for (int i = 0; i < descLen; i++) {
-    		desc.add(new TDItem(typeAr[i], ""));
+            if (typeAr[i] != null) {
+    		    desc.add(new TDItem(typeAr[i], ""));
+            }
     	}
     }
 

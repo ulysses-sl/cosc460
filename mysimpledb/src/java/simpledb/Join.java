@@ -9,6 +9,11 @@ public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
 
+    JoinPredicate pred;
+    DbIterator childit1, childit2;
+    Tuple t1, t2;
+    boolean isOpen;
+
     /**
      * Constructor. Accepts to children to join and the predicate to join them
      * on
@@ -18,12 +23,16 @@ public class Join extends Operator {
      * @param child2 Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        // some code goes here
+        pred = p;
+        childit1 = child1;
+        childit2 = child2;
+        isOpen = false;
+        t1 = null;
+        t2 = null;
     }
 
     public JoinPredicate getJoinPredicate() {
-        // some code goes here
-        return null;
+        return pred;
     }
 
     /**
@@ -31,8 +40,7 @@ public class Join extends Operator {
      * alias or table name.
      */
     public String getJoinField1Name() {
-        // some code goes here
-        return null;
+        return childit1.getTupleDesc().getFieldName(pred.getField1());
     }
 
     /**
@@ -40,8 +48,7 @@ public class Join extends Operator {
      * alias or table name.
      */
     public String getJoinField2Name() {
-        // some code goes here
-        return null;
+        return childit2.getTupleDesc().getFieldName(pred.getField2());
     }
 
     /**
@@ -49,21 +56,36 @@ public class Join extends Operator {
      * implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return TupleDesc.merge(childit1.getTupleDesc(), childit2.getTupleDesc());
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        super.open();
+        try {
+            childit1.open();
+            childit2.open();
+        } catch (DbException e) {
+            throw new DbException("could not open");
+        }
+        isOpen = true;
     }
 
     public void close() {
-        // some code goes here
+        childit1.close();
+        childit2.close();
+        super.close();
+        isOpen = false;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        if (isOpen) {
+            childit1.rewind();
+            childit2.rewind();
+        }
+        else {
+            throw new DbException("open the iterator first");
+        }
     }
 
     /**
@@ -85,19 +107,45 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        if (isOpen) {
+            while (childit1.hasNext() || childit2.hasNext()) {
+                if (t1 == null || !childit2.hasNext()) {
+                    t1 = childit1.next();
+                    childit2.rewind();
+                }
+                while (childit2.hasNext()) {
+                    t2 = childit2.next();
+                    if (pred.filter(t1, t2)) {
+                        int n1 = childit1.getTupleDesc().numFields();
+                        int n2 = childit2.getTupleDesc().numFields();
+                        Tuple rv = new Tuple(getTupleDesc());
+                        for (int i = 0; i < n1; i++) {
+                            rv.setField(i, t1.getField(i));
+                        }
+                        for (int i = 0; i < n2; i++) {
+                            rv.setField(i + n1, t2.getField(i));
+                        }
+                        return rv;
+                    }
+                }
+            }
+            return null;
+        }
+        else {
+            throw new DbException("open iterator first");
+        }
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        DbIterator[] rv = { childit1, childit2 };
+        return rv;
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        childit1 = children[0];
+        childit2 = children[1];
     }
 
 }

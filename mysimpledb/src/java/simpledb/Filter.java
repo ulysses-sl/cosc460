@@ -16,31 +16,48 @@ public class Filter extends Operator {
      * @param p     The predicate to filter tuples with
      * @param child The child operator
      */
+
+    Predicate pred;
+    DbIterator childit;
+    boolean isOpen;
     public Filter(Predicate p, DbIterator child) {
-        // some code goes here
+        pred = p;
+        childit = child;
+        isOpen = false;
     }
 
     public Predicate getPredicate() {
-        // some code goes here
-        return null;
+        return pred;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return childit.getTupleDesc();
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        super.open();
+        try {
+            childit.open();
+        } catch (DbException e) {
+            throw new DbException("could not open");
+        }
+        isOpen = true;
     }
 
     public void close() {
-        // some code goes here
+        childit.close();
+        super.close();
+        isOpen = false;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        if (isOpen) {
+            childit.rewind();
+        }
+        else {
+            throw new DbException("open the iterator first");
+        }
     }
 
     /**
@@ -54,19 +71,29 @@ public class Filter extends Operator {
      */
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        if (isOpen) {
+            while (childit.hasNext()) {
+                Tuple t = childit.next();
+                if (pred.filter(t)) {
+                    return t;
+                }
+            }
+            return null;
+        }
+        else {
+            throw new DbException("open iterator first");
+        }
     }
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        DbIterator[] rv = { childit };
+        return rv;
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        childit = children[0];
     }
 
 }
