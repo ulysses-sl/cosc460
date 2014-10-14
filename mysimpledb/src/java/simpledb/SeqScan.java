@@ -7,7 +7,7 @@ import java.util.*;
  * each tuple of a table in no particular order (e.g., as they are laid out on
  * disk).
  */
-public class SeqScan implements DbIterator {
+public class  SeqScan implements DbIterator {
 
     private static final long serialVersionUID = 1L;
     
@@ -31,7 +31,7 @@ public class SeqScan implements DbIterator {
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
     	tabId = tableid;
     	alias = tableAlias;
-    	it = Database.getCatalog().getDatabaseFile(tabId).iterator(null);
+    	it = Database.getCatalog().getDatabaseFile(tabId).iterator(tid);
     }
 
     /**

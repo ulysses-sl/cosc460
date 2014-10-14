@@ -96,11 +96,7 @@ public class Predicate implements Serializable {
      * @return true if the comparison is true, false otherwise.
      */
     public boolean filter(Tuple t) {
-<<<<<<< HEAD
-        if (opnd == null || t.getField(fnum) == null) {
-=======
         if (opnd == null || t == null || t.getField(fnum) == null) {
->>>>>>> e1008ebf8114d89480775549c4fbb72dd60cd542
             return false;
         }
         return t.getField(fnum).compare(opr, opnd);

@@ -357,26 +357,42 @@ public class HeapPage implements Page {
     	private int idx;
     	private int count;
     	private final int max;
+        private Tuple nextTuple;
     	
     	public TupleIterator() {
     		idx = 0;
     		count = 0;
     		max = getFilledSlots();
+            nextTuple = null;
+            if (max - count > 0) {
+                while(!isSlotUsed(idx)) {
+                    idx++;
+                }
+                count++;
+                nextTuple = tuples[idx];
+                idx++;
+            }
     	}
 
 		@Override
 		public boolean hasNext() {
-			return count < max;
+			return nextTuple != null;
 		}
 
 		@Override
 		public Tuple next() {
-			while(!isSlotUsed(idx)) {
-				idx++;
-			}
-			count++;
-			Tuple temp = tuples[idx];
-			idx++;
+            Tuple temp = nextTuple;
+            nextTuple = null;
+
+            if (max - count > 0) {
+                while(!isSlotUsed(idx)) {
+                    idx++;
+                }
+                count++;
+                nextTuple = tuples[idx];
+                idx++;
+            }
+
 			return temp;
 		}
     }

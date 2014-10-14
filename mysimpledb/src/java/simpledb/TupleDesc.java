@@ -70,11 +70,7 @@ public class TupleDesc implements Serializable {
     	int descLen = typeAr.length;
     	for (int i = 0; i < descLen; i++) {
             if (typeAr[i] != null) {
-<<<<<<< HEAD
-    		    desc.add(new TDItem(typeAr[i], ""));
-=======
                 desc.add(new TDItem(typeAr[i], ""));
->>>>>>> e1008ebf8114d89480775549c4fbb72dd60cd542
             }
     	}
     }

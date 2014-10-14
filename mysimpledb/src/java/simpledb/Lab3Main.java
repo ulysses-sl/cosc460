@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Lab3Main {
 
@@ -21,6 +22,7 @@ public class Lab3Main {
         SeqScan scanCourses = new SeqScan(tid, Database.getCatalog().getTableId("Courses"));
         SeqScan scanProfs = new SeqScan(tid, Database.getCatalog().getTableId("Profs"));
         SeqScan scanTakes = new SeqScan(tid, Database.getCatalog().getTableId("Takes"));
+
         StringField alice = new StringField("alice", Type.STRING_LEN);
         Predicate p = new Predicate(1, Predicate.Op.EQUALS, alice);
         Filter filterStudents = new Filter(p, scanStudents);
@@ -45,9 +47,10 @@ public class Lab3Main {
         }
         joinFavCourse.close();
 
+        scanStudents.rewind();
         int ssid = scanStudents.getTupleDesc().fieldNameToIndex("Students.sid");
         int tsid = scanTakes.getTupleDesc().fieldNameToIndex("Takes.sid");
-        Join joinSid = new Join(new JoinPredicate(ssid, Predicate.Op.EQUALS, ssid), scanStudents,scanTakes);
+        Join joinSid = new Join(new JoinPredicate(ssid, Predicate.Op.EQUALS, tsid), scanStudents, scanTakes);
         System.out.println("\nQuery results:");
         joinSid.open();
         while (joinSid.hasNext()) {
@@ -55,6 +58,35 @@ public class Lab3Main {
             System.out.println("\t"+tup);
         }
         joinSid.close();
+
+        scanStudents.rewind();
+        scanTakes.rewind();
+        scanProfs.rewind();
+
+        Join joinSid2 = new Join(new JoinPredicate(ssid, Predicate.Op.EQUALS, tsid), scanStudents, scanTakes);
+
+        int tcid = joinSid2.getTupleDesc().fieldNameToIndex("Takes.cid");
+        int pcid = scanProfs.getTupleDesc().fieldNameToIndex("Profs.favoriteCourse");
+        Join joinCid2 = new Join(new JoinPredicate(tcid, Predicate.Op.EQUALS, pcid), joinSid2, scanProfs);
+
+        int pname = joinCid2.getTupleDesc().fieldNameToIndex("Profs.name");
+        Filter filterName = new Filter(new Predicate(pname, Predicate.Op.EQUALS, new StringField("Hay", 5)), joinCid2);
+
+        int sname = filterName.getTupleDesc().fieldNameToIndex("Students.name");
+
+        ArrayList<Integer> fieldList = new ArrayList<Integer>();
+        fieldList.add(sname);
+        Type[] typesList = { Type.STRING_TYPE };
+        Project projectName = new Project(fieldList, typesList, filterName);
+
+        System.out.println("\nQuery results:");
+        projectName.open();
+        while (projectName.hasNext()) {
+            Tuple tup = projectName.next();
+            System.out.println("\t"+tup);
+        }
+        projectName.close();
+
         Database.getBufferPool().transactionComplete(tid);
     }
 

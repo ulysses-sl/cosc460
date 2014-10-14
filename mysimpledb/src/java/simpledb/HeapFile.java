@@ -105,13 +105,12 @@ public class HeapFile implements DbFile {
             throws DbException, IOException, TransactionAbortedException {
     	HeapPage page;
     	try {
-    		int pageno = t.getRecordId().getPageId().pageNumber();
-    		if (pageno >= numPages()) {
-    			pageno = numPages() - 1;
-    		}
+    		//int pageno = t.getRecordId().getPageId().pageNumber();
+    		//if (pageno >= numPages()) {
+    		int pageno = numPages() - 1;
+    		//}
             page = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), pageno), null);
     	} catch (NoSuchElementException e) {
-    		System.out.println(numPages());
     		page = new HeapPage(new HeapPageId(getId(), numPages()), HeapPage.createEmptyPageData());
     	}
     	if (page.getNumEmptySlots() == 0) {
@@ -141,17 +140,19 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        return new PageIterator();
+        return new PageIterator(tid);
     }
 
     class PageIterator implements DbFileIterator {
     	private boolean openYet;
     	private int currentPageNo;
+        private TransactionId tid;
     	private Iterator<Tuple> currentPageIterator;
     	
-    	public PageIterator() {
+    	public PageIterator(TransactionId tid) {
     		openYet = false;
     		currentPageNo = 0;
+            this.tid = tid;
     	}
     /**
      * Opens the iterator
@@ -160,7 +161,7 @@ public class HeapFile implements DbFile {
      */
 		@Override
         public void open() throws DbException, TransactionAbortedException{
-			currentPageIterator = ((HeapPage) Database.getBufferPool().getPage(null, new HeapPageId(getId(), currentPageNo), null)).iterator();
+			currentPageIterator = ((HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), currentPageNo), null)).iterator();
 			currentPageNo++;
 			openYet = true;
 		}
@@ -207,7 +208,8 @@ public class HeapFile implements DbFile {
 		@Override
         public void rewind() throws DbException, TransactionAbortedException {
 			currentPageNo = 0;
-			open();
+            currentPageIterator = ((HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), currentPageNo), null)).iterator();
+            currentPageNo++;
 		}
 
     /**
